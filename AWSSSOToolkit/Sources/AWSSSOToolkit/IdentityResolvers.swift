@@ -11,7 +11,7 @@ public struct SendableAWSCredentialIdentity: Sendable {
   public let expiration: Date?
 }
 
-public struct InMemoryAWSSSOIdentityResolver: AWSCredentialIdentityResolver {
+public struct InMemoryAWSSSOIdentityResolver: AWSCredentialIdentityResolver, Sendable {
   // MARK: this struct is compatible with AWSCredentialIdentityResolver but does not rely on files in ~/.aws/ to work
   private let profile: AWSProfile
   public let actor: SSODeviceAuthorizationFlowActor
