@@ -1,5 +1,5 @@
 import SwiftUI
-import AWSSTS
+@preconcurrency import AWSSTS
 import SmithyIdentity
 import AWSSSOToolkit
 import os
@@ -18,22 +18,22 @@ struct MessageRecord: Identifiable {
 struct AWSSSOProfilesView: View {
   @SwiftUI.Environment(\.openURL) private var openURL
   @SwiftUI.Environment(ProfileStore.self) private var profileStore
-  
+
   @State var presentAuthUri: Bool = false
   @State var authUriRecord: AuthUriRecord? = nil
   @State var presentMessage: Bool = false
   @State var messageRecord: MessageRecord? = nil
   @State var selectedProfiles: Set<ProfileState.ID> = Set()
-  
+
   private func ssoLogin(profileState: ProfileState) async throws {
     let ir = InMemoryAWSSSOIdentityResolver(profile: profileState.profile)
     let authUri = try await ir.actor.setupAuth()
-    
+
     await MainActor.run {
       authUriRecord = AuthUriRecord(authUri: authUri)
       presentAuthUri = true
     }
-    
+
     try await ir.actor.getToken()
     // try await actor.getAccounts()
     // try await actor.getAccountRoles()
@@ -46,14 +46,14 @@ struct AWSSSOProfilesView: View {
     print("making callerid call")
     let response = try await stsClient.getCallerIdentity(input: GetCallerIdentityInput())
     print("done callerid call")
-    
+
     // FIXME: the following updates might not be instaneous
     profileState.identityResolver = ir
     profileState.userArn = response.arn
     profileState.tokenExpiration = await ir.actor.tokenExpiration
     profileState.credentialExpiration = await ir.actor.credentialExpiration
   }
-  
+
   var body: some View {
     VStack {
       let profileStates = profileStore.profileStates
