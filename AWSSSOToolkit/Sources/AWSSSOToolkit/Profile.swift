@@ -30,11 +30,11 @@ public struct AWSProfile: Identifiable, Sendable {
   }
 }
 
+@Observable
 final public class ProfileState: Identifiable, Hashable, Sendable {
   public let id = UUID()
   public let profile: AWSProfile
   public let identityResolver: InMemoryAWSSSOIdentityResolver
-  @MainActor public var userArn: String?
 
   public init(profile: AWSProfile) {
     self.profile = profile

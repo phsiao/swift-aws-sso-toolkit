@@ -131,6 +131,19 @@ public actor SSODeviceAuthorizationFlowActor {
     }
   }
 
+  private func transformRoleCredentials(roleCredentials: GetRoleCredentialsOutput) -> SendableAWSCredentialIdentity {
+    guard let roleCredentials = roleCredentials.roleCredentials else {
+      fatalError("roleCredentials can not be nil in getRoleCredentials response")
+    }
+    return SendableAWSCredentialIdentity(
+      accessKey: roleCredentials.accessKeyId!,
+      secret: roleCredentials.secretAccessKey!,
+      accountID: roleCredentials.accessKeyId,
+      sessionToken: roleCredentials.sessionToken,
+      expiration: _credentialExpiration
+    )
+  }
+
   public func getRoleCredentials() async throws -> SendableAWSCredentialIdentity {
     switch profile.profileType {
     case .SSO(session: _, accountId: let accountId, roleName: let roleName, region: let region):
@@ -145,15 +158,7 @@ public actor SSODeviceAuthorizationFlowActor {
       // note that the cached roleCredentials can still be valid even after logout or token expiration
       if let expiration = _credentialExpiration, expiration > Date() && roleCredentials != nil {
         logger.debug("using cached roleCredentials")
-        let roleCredentials = self.roleCredentials!.roleCredentials!
-        let credentials = SendableAWSCredentialIdentity(
-          accessKey: roleCredentials.accessKeyId!,
-          secret: roleCredentials.secretAccessKey!,
-          accountID: nil,
-          sessionToken: roleCredentials.sessionToken,
-          expiration: _credentialExpiration
-        )
-        return credentials
+        return transformRoleCredentials(roleCredentials: roleCredentials!)
       }
 
       guard let token = token else {
@@ -175,20 +180,13 @@ public actor SSODeviceAuthorizationFlowActor {
       )
       logger.debug("\(String(describing: self.roleCredentials))")
 
-      guard let roleCredentials = self.roleCredentials!.roleCredentials else {
+      guard let roleCred = self.roleCredentials!.roleCredentials else {
         throw SSODeviceAuthorizationFlowActorError.runtimeError(
           "roleCredentials can not be nil in getRoleCredentials response"
         )
       }
-      _credentialExpiration = Date(timeIntervalSince1970: Double(roleCredentials.expiration)/1000.0)
-      let credentials = SendableAWSCredentialIdentity(
-        accessKey: roleCredentials.accessKeyId!,
-        secret: roleCredentials.secretAccessKey!,
-        accountID: nil,
-        sessionToken: roleCredentials.sessionToken,
-        expiration: _credentialExpiration
-      )
-      return credentials
+      _credentialExpiration = Date(timeIntervalSince1970: Double(roleCred.expiration)/1000.0)
+      return transformRoleCredentials(roleCredentials: self.roleCredentials!)
     }
   }
 }
@@ -230,10 +228,10 @@ extension SSODeviceAuthorizationFlowActor {
   }
 
   public func forgetRoleCredentials() {
-    if roleCredentials != nil {
+    if self.roleCredentials != nil {
       logger.info("forget cached roleCredentials")
-      roleCredentials = nil
-      _credentialExpiration = nil
+      self.roleCredentials = nil
+      self._credentialExpiration = nil
     }
   }
 }

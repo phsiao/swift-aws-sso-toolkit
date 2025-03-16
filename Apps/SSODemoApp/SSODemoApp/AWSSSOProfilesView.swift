@@ -15,6 +15,22 @@ struct MessageRecord: Identifiable {
   let message: String
 }
 
+@Observable
+class ProfileViewModel: Identifiable {
+  public var id: UUID { profileState.id }
+  let profileState: ProfileState
+  var userArn: String
+  var tokenExpiration: String
+  var credentialExpiration: String
+
+  init(profileState: ProfileState) {
+    self.profileState = profileState
+    self.userArn = "N/A"
+    self.tokenExpiration = "N/A"
+    self.credentialExpiration = "N/A"
+  }
+}
+
 struct AWSSSOProfilesView: View {
   @SwiftUI.Environment(\.openURL) private var openURL
   @SwiftUI.Environment(ProfileStore.self) private var profileStore
@@ -23,11 +39,12 @@ struct AWSSSOProfilesView: View {
   @State var authUriRecord: AuthUriRecord? = nil
   @State var presentMessage: Bool = false
   @State var messageRecord: MessageRecord? = nil
-  @State var selectedProfiles: Set<ProfileState.ID> = Set()
+  @State var selectedProfiles: Set<ProfileViewModel.ID> = Set()
 
-  @State var profileViewStates: [UUID: (userArn: String, tokenExpiration: String, credentialExpiration: String)] = [:]
+  @State var profileViewModels: [UUID:ProfileViewModel] = [:]
 
-  private func ssoLogin(profileState: ProfileState) async throws {
+  private func ssoLogin(profileViewModel: ProfileViewModel) async throws {
+    let profileState = profileViewModel.profileState
     let ir = profileState.identityResolver
     let authUri = try await ir.actor.setupAuth()
 
@@ -48,10 +65,9 @@ struct AWSSSOProfilesView: View {
     print("done callerid call")
 
     // FIXME: the following updates might not be instaneous
-    profileState.userArn = response.arn
-    profileViewStates[profileState.id] = (response.arn!,
-                                          getDateString(await profileState.tokenExpiration()),
-                                          getDateString(await profileState.credentialExpiration()))
+    profileViewModel.userArn = response.arn!
+    profileViewModel.tokenExpiration = getDateString(await profileState.tokenExpiration())
+    profileViewModel.credentialExpiration = getDateString(await profileState.credentialExpiration())
   }
 
   // format the date as a string for display in current time zone
@@ -64,38 +80,37 @@ struct AWSSSOProfilesView: View {
     return dateFormatter.string(from: date)
   }
 
-  private func initProfileViewStates(_ profileStates: [ProfileState]) {
-    for profileState in profileStates {
-      profileViewStates[profileState.id] = ("N/A", "N/A", "N/A")
-    }
-  }
-
   @ViewBuilder
-  private func menu(items: Set<ProfileState.ID>) -> some View{
+  private func menu(items: Set<ProfileViewModel.ID>) -> some View{
     Group {
       Button("Login") {
         Task {
-          let profileState = profileStore.profileStates.first(where: { $0.id == items.first! })!
-          try await ssoLogin(profileState: profileState)
+          let profileViewModel = self.profileViewModels[items.first!]!
+          try await ssoLogin(profileViewModel: profileViewModel)
         }
       }
       Button("Logout") {
         Task {
-          let profileState = profileStore.profileStates.first(where: { $0.id == items.first! })!
+          let profileViewModel = profileViewModels[items.first!]!
+          let profileState = profileViewModel.profileState
           try await profileState.identityResolver.actor.logout()
+          profileViewModel.tokenExpiration = getDateString(await profileState.tokenExpiration())
+          profileViewModel.credentialExpiration = getDateString(await profileState.credentialExpiration())
         }
       }
       Button("Forget role credentials") {
         Task {
-          let profileState = profileStore.profileStates.first(where: { $0.id == items.first! })!
+          let profileViewModel = profileViewModels[items.first!]!
+          let profileState = profileViewModel.profileState
           await profileState.identityResolver.actor.forgetRoleCredentials()
+          profileViewModel.tokenExpiration = getDateString(await profileState.tokenExpiration())
+          profileViewModel.credentialExpiration = getDateString(await profileState.credentialExpiration())
         }
       }
       Button("Get caller identity (once logged in)") {
         Task {
-          guard let profileState = profileStore.profileStates.first(where: { $0.id == items.first! }) else {
-            return
-          }
+          let profileViewModel = profileViewModels[items.first!]!
+          let profileState = profileViewModel.profileState
           let ir = profileState.identityResolver
           let stsConfiguration = try await STSClient.STSClientConfiguration(
             awsCredentialIdentityResolver: ir,
@@ -107,7 +122,6 @@ struct AWSSSOProfilesView: View {
             let response = try await stsClient.getCallerIdentity(input: GetCallerIdentityInput())
             print("done callerid call")
             print("response: \(response.arn!)")
-
             messageRecord = MessageRecord(title: "Caller Identity", message: response.arn!)
             presentMessage = true
           } catch {
@@ -115,6 +129,8 @@ struct AWSSSOProfilesView: View {
             messageRecord = MessageRecord(title: "Error", message: String(describing: error))
             presentMessage = true
           }
+          profileViewModel.tokenExpiration = getDateString(await profileState.tokenExpiration())
+          profileViewModel.credentialExpiration = getDateString(await profileState.credentialExpiration())
         }
       }
     }
@@ -122,52 +138,40 @@ struct AWSSSOProfilesView: View {
 
   var body: some View {
     VStack {
-      let profileStates = profileStore.profileStates
-      Table(profileStates, selection: $selectedProfiles) {
+      Table(Array(profileViewModels.values), selection: $selectedProfiles) {
         TableColumn("Profile Name") {
-          Text($0.profile.profileName)
+          Text($0.profileState.profile.profileName)
         }
         TableColumn("User ARN") {
-          let viewStates = profileViewStates[$0.id]
-          Text(viewStates != nil ? viewStates!.userArn : "N/A")
+          Text($0.userArn)
             .alert(isPresented: self.$presentMessage) {
               Alert(title: Text(messageRecord!.title),
                     message: Text(messageRecord!.message)
               )
             }
         }
-        TableColumn("Token Expiration") { (profileState: ProfileState) in
-          let viewStates = self.profileViewStates[profileState.id]
-          Text(viewStates != nil ? viewStates!.tokenExpiration : "N/A")
-            .task {
-              if viewStates != nil {
-                let tokenExpiration = await profileState.tokenExpiration()
-                profileViewStates[profileState.id] = (viewStates!.userArn, getDateString(tokenExpiration), viewStates!.credentialExpiration)
-              }
-            }
+        TableColumn("Token Expiration") {
+          Text($0.tokenExpiration)
         }
-        TableColumn("Credential Expiration") { (profileState: ProfileState) in
-          let viewStates = self.profileViewStates[profileState.id]
-          Text(viewStates != nil ? viewStates!.tokenExpiration : "N/A")
-            .task {
-              if viewStates != nil {
-                let credentialExpiration = await profileState.credentialExpiration()
-                profileViewStates[profileState.id] = (viewStates!.userArn, viewStates!.tokenExpiration, getDateString(credentialExpiration))
-              }
-            }
+        TableColumn("Credential Expiration") {
+          Text($0.credentialExpiration)
         }
       }
-      .contextMenu(forSelectionType: ProfileState.ID.self) { items in
+      .task {
+        for profileState in self.profileStore.profileStates {
+          if profileViewModels[profileState.id] == nil {
+            profileViewModels[profileState.id] = (ProfileViewModel(profileState: profileState))
+          }
+        }
+      }
+      .contextMenu(forSelectionType: ProfileViewModel.ID.self) { items in
         menu(items: items)
       }
       primaryAction: { items in
         Task {
-          try await ssoLogin(profileState: profileStore.profileStates.first(where: { $0.id == items.first! })!)
+          try await ssoLogin(profileViewModel: self.profileViewModels[items.first!]!)
         }
       }
-    }
-    .task {
-      initProfileViewStates(self.profileStore.profileStates)
     }
     .alert(isPresented: self.$presentAuthUri) {
       Alert(title: Text("Login via AWS SSO"),
