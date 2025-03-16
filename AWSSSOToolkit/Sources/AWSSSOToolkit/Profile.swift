@@ -30,16 +30,23 @@ public struct AWSProfile: Identifiable, Sendable {
   }
 }
 
-public class ProfileState: Identifiable, Hashable {
+final public class ProfileState: Identifiable, Hashable, Sendable {
   public let id = UUID()
   public let profile: AWSProfile
-  public var identityResolver: InMemoryAWSSSOIdentityResolver?
-  public var userArn: String?
-  public var tokenExpiration: Date?
-  public var credentialExpiration: Date?
+  public let identityResolver: InMemoryAWSSSOIdentityResolver
+  @MainActor public var userArn: String?
 
   public init(profile: AWSProfile) {
     self.profile = profile
+    self.identityResolver = InMemoryAWSSSOIdentityResolver(profile: profile)
+  }
+
+  public func tokenExpiration() async -> Date? {
+    return await identityResolver.actor.tokenExpiration
+  }
+
+  public func credentialExpiration() async -> Date? {
+    return await identityResolver.actor.credentialExpiration
   }
 
   public static func == (lhs: ProfileState, rhs: ProfileState) -> Bool {
