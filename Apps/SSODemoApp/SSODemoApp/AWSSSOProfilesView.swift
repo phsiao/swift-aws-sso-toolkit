@@ -54,6 +54,17 @@ struct AWSSSOProfilesView: View {
     profileState.credentialExpiration = await ir.actor.credentialExpiration
   }
 
+  // format the date as a string for display in current time zone
+  private func getDateString(_ date: Date?) -> String {
+    guard let date = date else {
+      return "N/A"
+    }
+    let dateFormatter = ISO8601DateFormatter()
+    dateFormatter.timeZone = TimeZone.current
+    return dateFormatter.string(from: date)
+  }
+
+
   var body: some View {
     VStack {
       let profileStates = profileStore.profileStates
@@ -70,10 +81,10 @@ struct AWSSSOProfilesView: View {
             }
         }
         TableColumn("Token Expiration") {
-          Text($0.tokenExpiration != nil ? String(describing: $0.tokenExpiration!) : "N/A")
+          Text(getDateString($0.tokenExpiration))
         }
         TableColumn("Credential Expiration") {
-          Text($0.credentialExpiration != nil ? String(describing: $0.credentialExpiration!) : "N/A")
+          Text(getDateString($0.credentialExpiration))
         }
       }
       .contextMenu(forSelectionType: ProfileState.ID.self) { items in
