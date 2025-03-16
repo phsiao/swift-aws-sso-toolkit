@@ -1,2 +1,2 @@
-public let DefaultSubsystemName: String = "AWSSSOToolkit"
-public let DefaultClientName: String = "aws-identity-profiles"
+public let defaultSubsystemName: String = "AWSSSOToolkit"
+public let defaultClientName: String = "aws-identity-profiles"

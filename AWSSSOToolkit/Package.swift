@@ -16,6 +16,7 @@ let package = Package(
       targets: ["AWSSSOToolkit"]),
   ],
   dependencies: [
+    .package(url: "https://github.com/SimplyDanny/SwiftLintPlugins", from: "0.58.0"),
     .package(
       url: "https://github.com/awslabs/aws-sdk-swift",
       from: "1.2.0"
@@ -30,7 +31,8 @@ let package = Package(
         .product(name: "AWSSSOOIDC", package: "aws-sdk-swift"),
         .product(name: "AWSSSO", package: "aws-sdk-swift"),
         .product(name: "AWSSTS", package: "aws-sdk-swift"),
-      ]
+      ],
+      plugins: [.plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")]
     ),
     .testTarget(
       name: "AWSSSOToolkitTests",

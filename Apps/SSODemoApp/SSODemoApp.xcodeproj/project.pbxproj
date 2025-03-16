@@ -113,6 +113,7 @@
 			buildConfigurationList = BF2141272D8642C9006C4495 /* Build configuration list for PBXNativeTarget "SSODemoApp" */;
 			buildPhases = (
 				BF2140FE2D8642C8006C4495 /* Sources */,
+				BF524A3C2D86E362005E632D /* Run Script */,
 				BF2140FF2D8642C8006C4495 /* Frameworks */,
 				BF2141002D8642C8006C4495 /* Resources */,
 			);
@@ -244,6 +245,30 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		BF524A3C2D86E362005E632D /* Run Script */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/SSODemoApp",
+				"$(SRCROOT)/SSODemoAppTests",
+				"$(SRCROOT)/SSODemoAppUITests",
+			);
+			name = "Run Script";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Add Homebrew bin to PATH for SwiftLint\nif test -d \"/opt/homebrew/bin/\"; then\n  PATH=\"/opt/homebrew/bin/:$PATH\"\nfi\n\nif command -v swiftlint >/dev/null 2>&1\nthen\n    swiftlint\nelse\n    echo \"warning: `swiftlint` command not found - See https://github.com/realm/SwiftLint#installation for installation instructions.\"\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		BF2140FE2D8642C8006C4495 /* Sources */ = {

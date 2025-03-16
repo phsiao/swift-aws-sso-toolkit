@@ -4,7 +4,6 @@ import AWSSSOOIDC
 import AWSSSO
 import struct os.Logger
 
-
 public enum SSODeviceAuthorizationFlowActorError: Error {
   case runtimeError(String)
   case tokenExipred
@@ -19,24 +18,24 @@ public actor SSODeviceAuthorizationFlowActor {
   private let profile: AWSProfile
 
   // private internal state
-  private var ssoClientData: RegisterClientOutput? = nil
-  private var deviceAuthData: StartDeviceAuthorizationOutput? = nil
-  private var token: CreateTokenOutput? = nil
+  private var ssoClientData: RegisterClientOutput?
+  private var deviceAuthData: StartDeviceAuthorizationOutput?
+  private var token: CreateTokenOutput?
 
   private var _tokenExpiration: Date?
   public var tokenExpiration: Date? {
-    get { return _tokenExpiration }
+    return _tokenExpiration
   }
 
   private var _credentialExpiration: Date?
   public var credentialExpiration: Date? {
-    get { return _credentialExpiration }
+    return _credentialExpiration
   }
 
-  public init(profile: AWSProfile, clientName: String = DefaultClientName) {
+  public init(profile: AWSProfile, clientName: String = defaultClientName) {
     self.profile = profile
     self.clientName = clientName
-    self.logger = Logger(subsystem: DefaultSubsystemName,
+    self.logger = Logger(subsystem: defaultSubsystemName,
                          category: String(describing: SSODeviceAuthorizationFlowActor.self))
   }
 
@@ -82,10 +81,14 @@ public actor SSODeviceAuthorizationFlowActor {
       }
       logger.debug("deviceAuth: \(String(describing: deviceAuthData))")
       guard let verificationUri = deviceAuthData.verificationUriComplete else {
-        throw SSODeviceAuthorizationFlowActorError.runtimeError("startDeviceAuthorization must not return nil verification URI")
+        throw SSODeviceAuthorizationFlowActorError.runtimeError(
+          "startDeviceAuthorization must not return nil verification URI"
+        )
       }
       guard let url = URL(string: verificationUri) else {
-        throw SSODeviceAuthorizationFlowActorError.runtimeError("verification URI (\(verificationUri) is not a valid URL")
+        throw SSODeviceAuthorizationFlowActorError.runtimeError(
+          "verification URI (\(verificationUri) is not a valid URL"
+        )
       }
       return url
     }
@@ -128,10 +131,10 @@ public actor SSODeviceAuthorizationFlowActor {
   }
 
   public func getRoleCredentials() async throws -> SendableAWSCredentialIdentity {
-    guard let _ = ssoClientData else {
+    if ssoClientData == nil {
       throw SSODeviceAuthorizationFlowActorError.invalidStateClientNotRegisterd
     }
-    guard let _ = deviceAuthData else {
+    if deviceAuthData == nil {
       throw SSODeviceAuthorizationFlowActorError.invalidStateDeviceNotAuthorized
     }
     guard let token = token else {
@@ -151,7 +154,9 @@ public actor SSODeviceAuthorizationFlowActor {
       logger.debug("\(String(describing: response))")
 
       guard let roleCredentials = response.roleCredentials else {
-        throw SSODeviceAuthorizationFlowActorError.runtimeError("roleCredentials can not be nil in getRoleCredentials response")
+        throw SSODeviceAuthorizationFlowActorError.runtimeError(
+          "roleCredentials can not be nil in getRoleCredentials response"
+        )
       }
       _credentialExpiration = Date(timeIntervalSince1970: Double(roleCredentials.expiration)/1000.0)
       let credentials = SendableAWSCredentialIdentity(
@@ -182,10 +187,10 @@ extension SSODeviceAuthorizationFlowActor {
     switch profile.profileType {
     case .SSO(session: _, accountId: _, roleName: _, region: let region):
       let ssoClient = try SSOClient(region: region)
-      let response = try await ssoClient.listAccountRoles(input: ListAccountRolesInput(accessToken: token?.accessToken, accountId: accountId))
+      let response = try await ssoClient.listAccountRoles(
+        input: ListAccountRolesInput(accessToken: token?.accessToken, accountId: accountId))
       logger.info("\(String(describing: response))")
       return response.roleList
     }
   }
 }
-

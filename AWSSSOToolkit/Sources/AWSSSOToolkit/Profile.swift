@@ -59,4 +59,3 @@ public class ProfileStore {
     self.profileStates = profileStates
   }
 }
-

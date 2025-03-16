@@ -1,5 +1,5 @@
 {
-  "originHash" : "552ff19a216ce8bd014dc62c8e0c3fa54a6993402b5089035911e62cbeb6cdb5",
+  "originHash" : "53a6053a36f2f518f3c0da2a17a4df3b09489610cd5cf1526398fc33ed4a3e52",
   "pins" : [
     {
       "identity" : "aws-crt-swift",
@@ -35,6 +35,15 @@
       "state" : {
         "revision" : "3d8596ed08bd13520157f0355e35caed215ffbfa",
         "version" : "1.6.3"
+      }
+    },
+    {
+      "identity" : "swiftlintplugins",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/SimplyDanny/SwiftLintPlugins",
+      "state" : {
+        "revision" : "7a3d77f3dd9f91d5cea138e52c20cfceabf352de",
+        "version" : "0.58.2"
       }
     }
   ],
