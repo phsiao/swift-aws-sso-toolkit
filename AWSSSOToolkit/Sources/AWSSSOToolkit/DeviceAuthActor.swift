@@ -21,6 +21,7 @@ public actor SSODeviceAuthorizationFlowActor {
   private var ssoClientData: RegisterClientOutput?
   private var deviceAuthData: StartDeviceAuthorizationOutput?
   private var token: CreateTokenOutput?
+  private var roleCredentials: GetRoleCredentialsOutput?
 
   private var _tokenExpiration: Date?
   public var tokenExpiration: Date? {
@@ -131,29 +132,50 @@ public actor SSODeviceAuthorizationFlowActor {
   }
 
   public func getRoleCredentials() async throws -> SendableAWSCredentialIdentity {
-    if ssoClientData == nil {
-      throw SSODeviceAuthorizationFlowActorError.invalidStateClientNotRegisterd
-    }
-    if deviceAuthData == nil {
-      throw SSODeviceAuthorizationFlowActorError.invalidStateDeviceNotAuthorized
-    }
-    guard let token = token else {
-      throw SSODeviceAuthorizationFlowActorError.invalidStateTokenNotCreated
-    }
-
     switch profile.profileType {
     case .SSO(session: _, accountId: let accountId, roleName: let roleName, region: let region):
+      if ssoClientData == nil {
+        throw SSODeviceAuthorizationFlowActorError.invalidStateClientNotRegisterd
+      }
+      if deviceAuthData == nil {
+        throw SSODeviceAuthorizationFlowActorError.invalidStateDeviceNotAuthorized
+      }
+
+      // use cached roleCredentials if it is not expired
+      // note that the cached roleCredentials can still be valid even after logout or token expiration
+      if let expiration = _credentialExpiration, expiration > Date() && roleCredentials != nil {
+        logger.debug("using cached roleCredentials")
+        let roleCredentials = self.roleCredentials!.roleCredentials!
+        let credentials = SendableAWSCredentialIdentity(
+          accessKey: roleCredentials.accessKeyId!,
+          secret: roleCredentials.secretAccessKey!,
+          accountID: nil,
+          sessionToken: roleCredentials.sessionToken,
+          expiration: _credentialExpiration
+        )
+        return credentials
+      }
+
+      guard let token = token else {
+        throw SSODeviceAuthorizationFlowActorError.invalidStateTokenNotCreated
+      }
+
+      if let expiration = _tokenExpiration, expiration < Date() {
+        self.token = nil
+        throw SSODeviceAuthorizationFlowActorError.tokenExipred
+      }
+
       let ssoClient = try SSOClient(region: region)
-      let response = try await ssoClient.getRoleCredentials(
+      roleCredentials = try await ssoClient.getRoleCredentials(
         input: GetRoleCredentialsInput(
           accessToken: token.accessToken,
           accountId: accountId,
           roleName: roleName
         )
       )
-      logger.debug("\(String(describing: response))")
+      logger.debug("\(String(describing: self.roleCredentials))")
 
-      guard let roleCredentials = response.roleCredentials else {
+      guard let roleCredentials = self.roleCredentials!.roleCredentials else {
         throw SSODeviceAuthorizationFlowActorError.runtimeError(
           "roleCredentials can not be nil in getRoleCredentials response"
         )
@@ -191,6 +213,27 @@ extension SSODeviceAuthorizationFlowActor {
         input: ListAccountRolesInput(accessToken: token?.accessToken, accountId: accountId))
       logger.info("\(String(describing: response))")
       return response.roleList
+    }
+  }
+
+  public func logout() async throws {
+    switch profile.profileType {
+    case .SSO(session: _, accountId: _, roleName: _, region: let region):
+      let ssoClient = try SSOClient(region: region)
+      if let token = token {
+        logger.info("logout requested")
+        _ = try await ssoClient.logout(input: LogoutInput(accessToken: token.accessToken))
+        self.token = nil
+        self._tokenExpiration = nil
+      }
+    }
+  }
+
+  public func forgetRoleCredentials() {
+    if roleCredentials != nil {
+      logger.info("forget cached roleCredentials")
+      roleCredentials = nil
+      _credentialExpiration = nil
     }
   }
 }

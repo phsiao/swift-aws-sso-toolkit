@@ -29,10 +29,8 @@ struct AWSSSOProfilesView: View {
     let ir = InMemoryAWSSSOIdentityResolver(profile: profileState.profile)
     let authUri = try await ir.actor.setupAuth()
 
-    await MainActor.run {
-      authUriRecord = AuthUriRecord(authUri: authUri)
-      presentAuthUri = true
-    }
+    authUriRecord = AuthUriRecord(authUri: authUri)
+    presentAuthUri = true
 
     try await ir.actor.getToken()
     // try await actor.getAccounts()
@@ -94,6 +92,26 @@ struct AWSSSOProfilesView: View {
               try await ssoLogin(profileState: profileStates.first(where: { $0.id == items.first! })!)
             }
           }
+          Button("Logout") {
+            Task {
+              let profileState = profileStates.first(where: { $0.id == items.first! })!
+              guard let ir = profileState.identityResolver else {
+                return
+              }
+              try await ir.actor.logout()
+              profileState.tokenExpiration = await ir.actor.tokenExpiration
+            }
+          }
+          Button("Forget role credentials") {
+            Task {
+              let profileState = profileStates.first(where: { $0.id == items.first! })!
+              guard let ir = profileState.identityResolver else {
+                return
+              }
+              await ir.actor.forgetRoleCredentials()
+              profileState.credentialExpiration = await ir.actor.credentialExpiration
+            }
+          }
           Button("Get caller identity (once logged in)") {
             Task {
               guard let profileState = profileStates.first(where: { $0.id == items.first! }) else {
@@ -108,13 +126,17 @@ struct AWSSSOProfilesView: View {
               )
               let stsClient = STSClient(config: stsConfiguration)
               print("making callerid call")
-              let response = try await stsClient.getCallerIdentity(input: GetCallerIdentityInput())
-              print("done callerid call")
-              print("response: \(response.arn!)")
-              await MainActor.run {
+              do {
+                let response = try await stsClient.getCallerIdentity(input: GetCallerIdentityInput())
+                print("done callerid call")
+                print("response: \(response.arn!)")
+
                 messageRecord = MessageRecord(title: "Caller Identity", message: response.arn!)
                 presentMessage = true
-                print("updating messageRecord \(messageRecord!)")
+              } catch {
+                print("error: \(error)")
+                messageRecord = MessageRecord(title: "Error", message: String(describing: error))
+                presentMessage = true
               }
             }
           }
