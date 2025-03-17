@@ -3,6 +3,7 @@ import protocol SmithyIdentity.AWSCredentialIdentityResolver
 import struct SmithyIdentity.AWSCredentialIdentity
 import struct Smithy.Attributes
 
+/// An AWS credential identity that can be transmitted between actors or tasks.
 public struct SendableAWSCredentialIdentity: Sendable {
   public let accessKey: String
   public let secret: String
@@ -11,9 +12,15 @@ public struct SendableAWSCredentialIdentity: Sendable {
   public let expiration: Date?
 }
 
+/// A credentials resolver for initializing AWS SDK clients.
+///
+/// This resolver is compatible with the `AWSCredentialIdentityResolver` protocol and stores temporary credentials in memory.
+/// It does not depend on AWS CLI configuration files, making it suitable for environments where the AWS CLI is not installed or configured.
+///
+/// You can find this identity resolver in the ``ProfileState`` object.
 public struct InMemoryAWSSSOIdentityResolver: AWSCredentialIdentityResolver, Sendable {
-  // MARK: this struct is compatible with AWSCredentialIdentityResolver but does not rely on files in ~/.aws/ to work
   private let profile: AWSProfile
+  /// The actor responsible for handling the device authorization flow, including starting the authentication process and obtaining credentials.
   public let actor: SSODeviceAuthorizationFlowActor
 
   public init(profile: AWSProfile) {

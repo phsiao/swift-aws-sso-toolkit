@@ -16,10 +16,15 @@ let package = Package(
       targets: ["AWSSSOToolkit"]),
   ],
   dependencies: [
+    .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0"),
     .package(url: "https://github.com/SimplyDanny/SwiftLintPlugins", from: "0.58.0"),
     .package(
       url: "https://github.com/awslabs/aws-sdk-swift",
       from: "1.2.0"
+    ),
+    .package(
+      url: "https://github.com/groue/GRDB.swift",
+      from: "7.3.0"
     )
   ],
   targets: [
@@ -31,6 +36,7 @@ let package = Package(
         .product(name: "AWSSSOOIDC", package: "aws-sdk-swift"),
         .product(name: "AWSSSO", package: "aws-sdk-swift"),
         .product(name: "AWSSTS", package: "aws-sdk-swift"),
+        .product(name: "GRDB", package: "GRDB.swift"),
       ],
       plugins: [.plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")]
     ),

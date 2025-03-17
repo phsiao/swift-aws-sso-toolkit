@@ -1,5 +1,5 @@
 {
-  "originHash" : "53a6053a36f2f518f3c0da2a17a4df3b09489610cd5cf1526398fc33ed4a3e52",
+  "originHash" : "3c270aa9f1c891479440f2664ae8ec425217515f13dd37c83f1f3f30de94f3ab",
   "pins" : [
     {
       "identity" : "aws-crt-swift",
@@ -20,12 +20,39 @@
       }
     },
     {
+      "identity" : "grdb.swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/groue/GRDB.swift.git",
+      "state" : {
+        "revision" : "6eba24d16952452a8a54f6a639491f3c8215527f",
+        "version" : "7.3.0"
+      }
+    },
+    {
       "identity" : "smithy-swift",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/smithy-lang/smithy-swift",
       "state" : {
         "revision" : "4acd065a846572b0a5052d26fe78d820fb7b1db3",
         "version" : "0.122.0"
+      }
+    },
+    {
+      "identity" : "swift-docc-plugin",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-docc-plugin",
+      "state" : {
+        "revision" : "85e4bb4e1cd62cec64a4b8e769dcefdf0c5b9d64",
+        "version" : "1.4.3"
+      }
+    },
+    {
+      "identity" : "swift-docc-symbolkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftlang/swift-docc-symbolkit",
+      "state" : {
+        "revision" : "b45d1f2ed151d057b54504d653e0da5552844e34",
+        "version" : "1.0.0"
       }
     },
     {

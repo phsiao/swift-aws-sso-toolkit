@@ -12,6 +12,10 @@ public enum SSODeviceAuthorizationFlowActorError: Error {
   case invalidStateTokenNotCreated
 }
 
+/// An actor that handles the device authorization flow for AWS SSO.
+///
+/// This actor is responsible for registering the client, starting the device authorization process, and obtaining role credentials.
+/// Swift actor is used to make sure the internal state is not shared between multiple threads.
 public actor SSODeviceAuthorizationFlowActor {
   private let clientName: String
   private let logger: Logger
@@ -24,11 +28,13 @@ public actor SSODeviceAuthorizationFlowActor {
   private var roleCredentials: GetRoleCredentialsOutput?
 
   private var _tokenExpiration: Date?
+  /// The expiration date of the device token.
   public var tokenExpiration: Date? {
     return _tokenExpiration
   }
 
   private var _credentialExpiration: Date?
+  /// The expiration date of the temporary role credentials
   public var credentialExpiration: Date? {
     return _credentialExpiration
   }
@@ -40,14 +46,15 @@ public actor SSODeviceAuthorizationFlowActor {
                          category: String(describing: SSODeviceAuthorizationFlowActor.self))
   }
 
-  // setupAuth() attempts to:
-  //   1. register this as a client
-  //   2. start device authorization process using the registered client
-  // to finish the setup, the returned URL must be open in a browser and for the user
-  // to finish the login.
-  //
-  // You can start getToken() after this step, though the token would only
-  // become available once the user finishes the login.
+  /// Set up the authentication flow.
+  ///
+  /// `setupAuth()` attempts to:
+  ///   1. register this as a client
+  ///   2. start device authorization process using the registered client
+  /// to finish the setup, the returned URL must be open in a browser and for the user
+  /// to finish the login.
+  ///
+  /// You can start ``getToken()`` after this step, though the token would only become available once the user finishes the login.
   public func setupAuth() async throws -> URL {
     switch profile.profileType {
     case .SSO(session: let session, accountId: _, roleName: _, region: let region):
@@ -95,6 +102,9 @@ public actor SSODeviceAuthorizationFlowActor {
     }
   }
 
+  /// Get the token after the user finishes the login.
+  ///
+  /// It continues to poll the server every 5 seconds for 30 times to get the token.
   public func getToken() async throws {
     let startDate = Date()
     switch profile.profileType {
@@ -144,6 +154,10 @@ public actor SSODeviceAuthorizationFlowActor {
     )
   }
 
+  /// This function attempts to get the role credentials for the given profile and returns the credentials in a sendable format.
+  ///
+  /// This allows the IdennityResolver to get the credentials crossing the actor boundary.
+  /// It also caches the role credentials for future use, and would only get the new credentials if the cached one is expired.
   public func getRoleCredentials() async throws -> SendableAWSCredentialIdentity {
     switch profile.profileType {
     case .SSO(session: _, accountId: let accountId, roleName: let roleName, region: let region):
@@ -193,6 +207,7 @@ public actor SSODeviceAuthorizationFlowActor {
 
 extension SSODeviceAuthorizationFlowActor {
   // MARK: - extra functionalities of the actor
+  /// Get a list of AWS accounts that this SSO session can access.
   public func getAccounts() async throws -> [SSOClientTypes.AccountInfo]? {
     switch profile.profileType {
     case .SSO(session: _, accountId: _, roleName: _, region: let region):
@@ -203,6 +218,7 @@ extension SSODeviceAuthorizationFlowActor {
     }
   }
 
+  /// Get an list of roles that the given account can assume.
   public func getAccountRoles(accountId: String) async throws -> [SSOClientTypes.RoleInfo]? {
     switch profile.profileType {
     case .SSO(session: _, accountId: _, roleName: _, region: let region):
@@ -214,6 +230,7 @@ extension SSODeviceAuthorizationFlowActor {
     }
   }
 
+  /// Log out of the SSO session.
   public func logout() async throws {
     switch profile.profileType {
     case .SSO(session: _, accountId: _, roleName: _, region: let region):
@@ -227,6 +244,7 @@ extension SSODeviceAuthorizationFlowActor {
     }
   }
 
+  /// Forget the cached role credentials.
   public func forgetRoleCredentials() {
     if self.roleCredentials != nil {
       logger.info("forget cached roleCredentials")
