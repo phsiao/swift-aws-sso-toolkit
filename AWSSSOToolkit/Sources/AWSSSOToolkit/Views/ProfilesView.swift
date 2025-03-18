@@ -27,30 +27,65 @@ class ProfileViewModelStore: Identifiable {
   }
 }
 
+@Observable
+class SSOSessionForm {
+  var ssoSessionName: String = "" {
+    didSet {
+      isFormComplete = !ssoSessionName.isEmpty &&
+      awsRegionList.filter({$0.region == self.region}).count == 1 &&
+      URL(string: startUrl) != nil
+    }
+  }
+  var startUrl: String = "" {
+    didSet {
+      isFormComplete = !ssoSessionName.isEmpty &&
+      awsRegionList.filter({$0.region == self.region}).count == 1 &&
+      URL(string: startUrl) != nil
+    }
+  }
+  var region: String = "Select a region" {
+    didSet {
+      isFormComplete = !ssoSessionName.isEmpty &&
+      awsRegionList.filter({$0.region == self.region}).count == 1 &&
+      URL(string: startUrl) != nil
+    }
+  }
+  var isFormComplete: Bool = false
+}
+
 struct AddSSOSessionView: View {
   private let backingDb = BackingDatabase(identifier: Bundle.main.bundleIdentifier!)
 
+  @State private var form = SSOSessionForm()
   @Binding var showAddSessionView: Bool
-  @State var ssoSessionName: String = ""
-  @State var startUrl: String = ""
-  @State var region: String = ""
 
   var body: some View {
     VStack {
+      Text("Create a new SSO session")
       VStack {
-        TextField("Session name", text: $ssoSessionName)
-        TextField("Start URL", text: $startUrl)
-        TextField("Region", text: $region)
+        TextField("Session name", text: $form.ssoSessionName).padding(.horizontal)
+        TextField("Start URL", text: $form.startUrl).padding(.horizontal)
+        Menu(form.region) {
+          ForEach(awsRegionList) { reg in
+            Button(reg.region) {
+              self.form.region = reg.region
+            }
+          }
+        }.padding(.horizontal)
+
       }
+      .padding()
       HStack {
         Spacer()
         Button("Cancel") {
           showAddSessionView.toggle()
         }
         Spacer()
-        Button("Add session") {
+        Button("Add") {
           Task {
-            let session = AWSSSOSession(sessionName: ssoSessionName, startUrl: startUrl, region: region)
+            let session = AWSSSOSession(sessionName: form.ssoSessionName,
+                                        startUrl: form.startUrl,
+                                        region: form.region)
             let dbq = try backingDb.getDbQueue()
             try dbq.write { dbq in
               try session.insert(dbq)
@@ -58,11 +93,62 @@ struct AddSSOSessionView: View {
             showAddSessionView.toggle()
           }
         }
+        .disabled(!form.isFormComplete)
         Spacer()
       }
     }
     .padding()
   }
+}
+
+@Observable
+class ProfileForm {
+  var profileName: String = "" {
+    didSet {
+      isFormComplete = !profileName.isEmpty &&
+      !accountId.isEmpty &&
+      !roleName.isEmpty &&
+      awsRegionList.filter({$0.region == self.region}).count == 1 &&
+      ssoSession != nil
+    }
+  }
+  var accountId: String = "" {
+    didSet {
+      isFormComplete = !profileName.isEmpty &&
+      !accountId.isEmpty &&
+      !roleName.isEmpty &&
+      awsRegionList.filter({$0.region == self.region}).count == 1 &&
+      ssoSession != nil
+    }
+  }
+  var roleName: String = "" {
+    didSet {
+      isFormComplete = !profileName.isEmpty &&
+      !accountId.isEmpty &&
+      !roleName.isEmpty &&
+      awsRegionList.filter({$0.region == self.region}).count == 1 &&
+      ssoSession != nil
+    }
+  }
+  var region: String = "Select a region" {
+    didSet {
+      isFormComplete = !profileName.isEmpty &&
+      !accountId.isEmpty &&
+      !roleName.isEmpty &&
+      awsRegionList.filter({$0.region == self.region}).count == 1 &&
+      ssoSession != nil
+    }
+  }
+  var ssoSession: AWSSSOSession? {
+    didSet {
+      isFormComplete = !profileName.isEmpty &&
+      !accountId.isEmpty &&
+      !roleName.isEmpty &&
+      awsRegionList.filter({$0.region == self.region}).count == 1 &&
+      ssoSession != nil
+    }
+  }
+  var isFormComplete: Bool = false
 }
 
 struct AddProfileView: View {
@@ -72,11 +158,7 @@ struct AddProfileView: View {
   @Binding var showAddProfileView: Bool
   @Binding var reloadNeeded: Bool
 
-  @State var profileName: String = ""
-  @State var accountId: String = ""
-  @State var roleName: String = ""
-  @State var region: String = ""
-  @State var ssoSession: AWSSSOSession?
+  @State private var form = ProfileForm()
 
   init(showAddProfileView: Binding<Bool>, reloadNeeded: Binding<Bool>) {
     self._reloadNeeded = reloadNeeded
@@ -94,32 +176,40 @@ struct AddProfileView: View {
 
   var body: some View {
     VStack {
+      Text("Create a new profle")
       VStack {
-        TextField("Profile name", text: $profileName)
-        TextField("Account ID", text: $accountId)
-        TextField("Role name", text: $roleName)
-        TextField("Region", text: $region)
+        TextField("Profile name", text: $form.profileName).padding(.horizontal)
+        TextField("Account ID", text: $form.accountId).padding(.horizontal)
+        TextField("Role name", text: $form.roleName).padding(.horizontal)
+        Menu(form.region) {
+          ForEach(awsRegionList) { reg in
+            Button(reg.region) {
+              form.region = reg.region
+            }
+          }
+        }.padding(.horizontal)
         Menu("Select SSO session") {
           ForEach(ssoSessions) { session in
             Button(session.sessionName) {
-              ssoSession = session
+              form.ssoSession = session
             }
           }
-        }
+        }.padding(.horizontal)
       }
+      .padding()
       HStack {
         Spacer()
         Button("Cancel") {
           showAddProfileView.toggle()
         }
         Spacer()
-        Button("Add profile") {
+        Button("Add") {
           Task {
-            let profile = AWSProfile(profileName: profileName,
-                                     profileType: .SSO(session: ssoSession!,
-                                                       accountId: accountId,
-                                                       roleName: roleName,
-                                                       region: region))
+            let profile = AWSProfile(profileName: form.profileName,
+                                     profileType: .SSO(session: form.ssoSession!,
+                                                       accountId: form.accountId,
+                                                       roleName: form.roleName,
+                                                       region: form.region))
             let ssoProfile = AWSSSOProfile(from: profile)
             let dbq = try backingDb.getDbQueue()
             try dbq.write { dbq in
@@ -129,6 +219,7 @@ struct AddProfileView: View {
             reloadNeeded.toggle()
           }
         }
+        .disabled(!form.isFormComplete)
         Spacer()
       }
     }

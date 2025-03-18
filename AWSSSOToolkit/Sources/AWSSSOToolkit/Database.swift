@@ -1,12 +1,14 @@
 import Foundation
 import GRDB
 
-/// Backing database for SSO session and profile configurations.
+/// A backing database for storing SSO session and profile configurations.
 ///
-/// [GRDB](https://github.com/groue/GRDB.swift) is used to implement the backing database for storing SSO session
-/// and profile configurations.
+/// This database uses [GRDB](https://github.com/groue/GRDB.swift) for implementation.
+///
+/// Note: Device tokens or role credentials are not stored in the database. Users will need to re-authenticate
+/// if the application is restarted.
 public struct BackingDatabase: Sendable {
-  /// The identifier of the database.  This is used to create a folder in the Application Support directory.
+  /// The identifier of the database, used to create a folder in the Application Support directory.
   public let identifier: String
   /// The name of the database file in the Application Support directory.
   public let dbFileName: String
@@ -56,6 +58,7 @@ public struct BackingDatabase: Sendable {
 
 // MARK: - DatabaseMigrator
 extension BackingDatabase {
+  /// Migrates the database to the latest schema.
   public func migrate() throws {
     let dbqueue = try self.getDbQueue()
     try self.migration(dbqueue)
@@ -86,7 +89,7 @@ extension BackingDatabase {
 }
 
 extension BackingDatabase {
-  /// Save the list of profiles to the database.
+  /// Save a  list of profiles to the database.
   public func save(profiles: [AWSProfile]) throws {
     try self.migrate()
     let dbQueue = try self.getDbQueue()
