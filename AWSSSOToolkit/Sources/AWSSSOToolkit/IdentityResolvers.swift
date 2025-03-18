@@ -14,13 +14,15 @@ public struct SendableAWSCredentialIdentity: Sendable {
 
 /// A credentials resolver for initializing AWS SDK clients.
 ///
-/// This resolver is compatible with the `AWSCredentialIdentityResolver` protocol and stores temporary credentials in memory.
-/// It does not depend on AWS CLI configuration files, making it suitable for environments where the AWS CLI is not installed or configured.
+/// This resolver is compatible with the `AWSCredentialIdentityResolver` protocol and stores temporary credentials
+/// in memory. It does not depend on AWS CLI configuration files, making it suitable for environments where the
+/// AWS CLI is not installed or configured.
 ///
 /// You can find this identity resolver in the ``ProfileState`` object.
 public struct InMemoryAWSSSOIdentityResolver: AWSCredentialIdentityResolver, Sendable {
   private let profile: AWSProfile
-  /// The actor responsible for handling the device authorization flow, including starting the authentication process and obtaining credentials.
+  /// The actor responsible for handling the device authorization flow, including starting the authentication process
+  /// and obtaining credentials.
   public let actor: SSODeviceAuthorizationFlowActor
 
   public init(profile: AWSProfile) {

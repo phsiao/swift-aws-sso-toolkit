@@ -1,4 +1,3 @@
-
 /// The default subsystem name for the package.  Mainly used in logging.
 public let defaultSubsystemName: String = "AWSSSOToolkit"
 

@@ -14,8 +14,8 @@ public enum SSODeviceAuthorizationFlowActorError: Error {
 
 /// An actor that handles the device authorization flow for AWS SSO.
 ///
-/// This actor is responsible for registering the client, starting the device authorization process, and obtaining role credentials.
-/// Swift actor is used to make sure the internal state is not shared between multiple threads.
+/// This actor is responsible for registering the client, starting the device authorization process, and obtaining
+/// role credentials. Swift actor is used to make sure the internal state is not shared between multiple threads.
 public actor SSODeviceAuthorizationFlowActor {
   private let clientName: String
   private let logger: Logger
@@ -54,7 +54,8 @@ public actor SSODeviceAuthorizationFlowActor {
   /// to finish the setup, the returned URL must be open in a browser and for the user
   /// to finish the login.
   ///
-  /// You can start ``getToken()`` after this step, though the token would only become available once the user finishes the login.
+  /// You can start ``getToken()`` after this step, though the token would only become available once the user
+  /// finishes the login.
   public func setupAuth() async throws -> URL {
     switch profile.profileType {
     case .SSO(session: let session, accountId: _, roleName: _, region: let region):
@@ -154,10 +155,12 @@ public actor SSODeviceAuthorizationFlowActor {
     )
   }
 
-  /// This function attempts to get the role credentials for the given profile and returns the credentials in a sendable format.
+  /// This function attempts to get the role credentials for the given profile and returns the credentials in
+  /// sendable format.
   ///
   /// This allows the IdennityResolver to get the credentials crossing the actor boundary.
-  /// It also caches the role credentials for future use, and would only get the new credentials if the cached one is expired.
+  /// It also caches the role credentials for future use, and would only get the new credentials if the cached one
+  /// is expired.
   public func getRoleCredentials() async throws -> SendableAWSCredentialIdentity {
     switch profile.profileType {
     case .SSO(session: _, accountId: let accountId, roleName: let roleName, region: let region):

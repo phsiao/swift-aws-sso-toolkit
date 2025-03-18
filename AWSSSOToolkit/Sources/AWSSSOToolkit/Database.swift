@@ -3,7 +3,8 @@ import GRDB
 
 /// Backing database for SSO session and profile configurations.
 ///
-/// [GRDB](https://github.com/groue/GRDB.swift) is used to implement the backing database for storing SSO session and profile configurations.
+/// [GRDB](https://github.com/groue/GRDB.swift) is used to implement the backing database for storing SSO session
+/// and profile configurations.
 public struct BackingDatabase: Sendable {
   /// The identifier of the database.  This is used to create a folder in the Application Support directory.
   public let identifier: String
