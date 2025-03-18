@@ -66,71 +66,71 @@ struct ProfilesTableView: View {
   }
 
   var body: some View {
-    VStack {
-      Table(viewModel.profileViewModels, selection: $viewModel.selectedProfiles) {
-        TableColumn("Profile Name") {
-          Text($0.profileState.profile.profileName)
-        } .width(min: 50, ideal: 100, max: 100)
-        TableColumn("SSO Sess. Name") {
-          switch $0.profileState.profile.profileType {
-          case .SSO(let session, _, _, _):
-            Text(session.sessionName)
-          }
-        } .width(min: 50, ideal: 100, max: 100)
-        TableColumn("Account ID") {
-          switch $0.profileState.profile.profileType {
-          case .SSO(_, let accountId, _, _):
-            Text(accountId)
-          }
-        } .width(min: 50, ideal: 100, max: 100)
-        TableColumn("Region") {
-          switch $0.profileState.profile.profileType {
-          case .SSO(_, _, _, let region):
-            Text(region)
-          }
-        } .width(min: 50, ideal: 100, max: 100)
-        TableColumn("Role Name") {
-          switch $0.profileState.profile.profileType {
-          case .SSO(_, _, let roleName, _):
-            Text(roleName)
-          }
-        } .width(min: 50, ideal: 100, max: 150)
-        TableColumn("Token Expiration") {
-          Text($0.tokenExpiration)
-        } .width(min: 180, ideal: 180, max: 200)
-        TableColumn("Credential Expiration") {
-          Text($0.credentialExpiration)
-        } .width(min: 180, ideal: 180, max: 200)
-        TableColumn("User ARN") {
-          Text($0.userArn)
-            .alert(isPresented: $viewModel.presentMessage) {
-              Alert(
-                title: Text(viewModel.messageRecord!.title),
-                message: Text(viewModel.messageRecord!.message)
-              )
-            }
-        } .width(min: 200, ideal: 300)
+    Table(viewModel.profileViewModels, selection: $viewModel.selectedProfiles) {
+      TableColumn("Profile Name") {
+        Text($0.profileState.profile.profileName)
       }
-      .contextMenu(forSelectionType: ProfileViewModel.ID.self) { items in
-        self.profileOpsMenu(items: items)
-        Divider()
-        self.profileFuncMenu(items: items)
-      } primaryAction: { items in
-        Task {
-          try await ssoLogin(
-            profileViewModel: viewModel.profileViewModels.filter { $0.id == items.first! }.first!
-          )
+      TableColumn("SSO Session Name") {
+        switch $0.profileState.profile.profileType {
+        case .SSO(let session, _, _, _):
+          Text(session.sessionName)
         }
       }
-      .onChange(of: reloadNeeded, initial: false) {
-        Task {
-          try await reload()
+#if os(macOS)
+      TableColumn("Account ID") {
+        switch $0.profileState.profile.profileType {
+        case .SSO(_, let accountId, _, _):
+          Text(accountId)
         }
       }
-      .task {
-        Task {
-          try await reload()
+      TableColumn("Region") {
+        switch $0.profileState.profile.profileType {
+        case .SSO(_, _, _, let region):
+          Text(region)
         }
+      }
+      TableColumn("Role Name") {
+        switch $0.profileState.profile.profileType {
+        case .SSO(_, _, let roleName, _):
+          Text(roleName)
+        }
+      }
+#endif
+      TableColumn("Token Expiration") {
+        Text($0.tokenExpiration)
+      }
+      TableColumn("Credential Expiration") {
+        Text($0.credentialExpiration)
+      }
+      TableColumn("User ARN") {
+        Text($0.userArn)
+          .alert(isPresented: $viewModel.presentMessage) {
+            Alert(
+              title: Text(viewModel.messageRecord!.title),
+              message: Text(viewModel.messageRecord!.message)
+            )
+          }
+      }
+    }
+    .contextMenu(forSelectionType: ProfileViewModel.ID.self) { items in
+      self.profileOpsMenu(items: items)
+      Divider()
+      self.profileFuncMenu(items: items)
+    } primaryAction: { items in
+      Task {
+        try await ssoLogin(
+          profileViewModel: viewModel.profileViewModels.filter { $0.id == items.first! }.first!
+        )
+      }
+    }
+    .onChange(of: reloadNeeded, initial: false) {
+      Task {
+        try await reload()
+      }
+    }
+    .task {
+      Task {
+        try await reload()
       }
     }
     .alert(isPresented: $viewModel.presentAuthUri) {

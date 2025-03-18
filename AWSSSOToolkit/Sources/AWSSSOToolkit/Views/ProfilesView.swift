@@ -248,12 +248,15 @@ public struct AWSSSOProfilesView: View {
     VStack {
       ProfilesTableView(reloadNeeded: $reloadNeeded)
       HStack {
+        Spacer()
         Button("Add a new SSO session") {
           showAddSessionView.toggle()
         }
+        Spacer()
         Button("Add a new profile") {
           showAddProfileView.toggle()
         }
+        Spacer()
       }
     }
     .sheet(isPresented: $showAddSessionView) {
