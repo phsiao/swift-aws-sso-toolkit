@@ -28,6 +28,113 @@ class ProfilesTableViewModel {
   }
 }
 
+private struct FullTableView: View {
+  @State var viewModel: ProfilesTableViewModel
+  var body: some View {
+    Table(viewModel.profileViewModels, selection: $viewModel.selectedProfiles) {
+      TableColumn("Profile Name") {
+        Text($0.profileState.profile.profileName)
+      }
+      TableColumn("SSO Session Name") {
+        switch $0.profileState.profile.profileType {
+        case .SSO(let session, _, _, _):
+          Text(session.sessionName)
+        }
+      }
+      TableColumn("Account ID") {
+        switch $0.profileState.profile.profileType {
+        case .SSO(_, let accountId, _, _):
+          Text(accountId)
+        }
+      }
+      TableColumn("Region") {
+        switch $0.profileState.profile.profileType {
+        case .SSO(_, _, _, let region):
+          Text(region)
+        }
+      }
+      TableColumn("Role Name") {
+        switch $0.profileState.profile.profileType {
+        case .SSO(_, _, let roleName, _):
+          Text(roleName)
+        }
+      }
+      TableColumn("Token Expiration") {
+        Text($0.tokenExpiration)
+      }
+      TableColumn("Credential Expiration") {
+        Text($0.credentialExpiration)
+      }
+      TableColumn("User ARN") {
+        Text($0.userArn)
+          .alert(isPresented: $viewModel.presentMessage) {
+            Alert(
+              title: Text(viewModel.messageRecord!.title),
+              message: Text(viewModel.messageRecord!.message)
+            )
+          }
+      }
+    }
+    .frame(minWidth: 1400)
+  }
+}
+
+private struct MediumTableView: View {
+  @State var viewModel: ProfilesTableViewModel
+  var body: some View {
+    Table(viewModel.profileViewModels, selection: $viewModel.selectedProfiles) {
+      TableColumn("Profile Name") {
+        Text($0.profileState.profile.profileName)
+      }
+      TableColumn("SSO Session Name") {
+        switch $0.profileState.profile.profileType {
+        case .SSO(let session, _, _, _):
+          Text(session.sessionName)
+        }
+      }
+      TableColumn("Token Expiration") {
+        Text($0.tokenExpiration)
+      }
+      TableColumn("Credential Expiration") {
+        Text($0.credentialExpiration)
+      }
+      TableColumn("User ARN") {
+        Text($0.userArn)
+          .alert(isPresented: $viewModel.presentMessage) {
+            Alert(
+              title: Text(viewModel.messageRecord!.title),
+              message: Text(viewModel.messageRecord!.message)
+            )
+          }
+      }
+    }
+    .frame(minWidth: 800)
+  }
+}
+
+private struct NarrowTableView: View {
+  @State var viewModel: ProfilesTableViewModel
+  var body: some View {
+    Table(viewModel.profileViewModels, selection: $viewModel.selectedProfiles) {
+      TableColumn("Profile Name") {
+        Text($0.profileState.profile.profileName)
+          .alert(isPresented: $viewModel.presentMessage) {
+            Alert(
+              title: Text(viewModel.messageRecord!.title),
+              message: Text(viewModel.messageRecord!.message)
+            )
+          }
+      }
+      TableColumn("SSO Session Name") {
+        switch $0.profileState.profile.profileType {
+        case .SSO(let session, _, _, _):
+          Text(session.sessionName)
+        }
+      }
+    }
+  }
+}
+
 struct ProfilesTableView: View {
   @SwiftUI.Environment(\.openURL) private var openURL
 
@@ -66,51 +173,10 @@ struct ProfilesTableView: View {
   }
 
   var body: some View {
-    Table(viewModel.profileViewModels, selection: $viewModel.selectedProfiles) {
-      TableColumn("Profile Name") {
-        Text($0.profileState.profile.profileName)
-      }
-      TableColumn("SSO Session Name") {
-        switch $0.profileState.profile.profileType {
-        case .SSO(let session, _, _, _):
-          Text(session.sessionName)
-        }
-      }
-#if os(macOS)
-      TableColumn("Account ID") {
-        switch $0.profileState.profile.profileType {
-        case .SSO(_, let accountId, _, _):
-          Text(accountId)
-        }
-      }
-      TableColumn("Region") {
-        switch $0.profileState.profile.profileType {
-        case .SSO(_, _, _, let region):
-          Text(region)
-        }
-      }
-      TableColumn("Role Name") {
-        switch $0.profileState.profile.profileType {
-        case .SSO(_, _, let roleName, _):
-          Text(roleName)
-        }
-      }
-#endif
-      TableColumn("Token Expiration") {
-        Text($0.tokenExpiration)
-      }
-      TableColumn("Credential Expiration") {
-        Text($0.credentialExpiration)
-      }
-      TableColumn("User ARN") {
-        Text($0.userArn)
-          .alert(isPresented: $viewModel.presentMessage) {
-            Alert(
-              title: Text(viewModel.messageRecord!.title),
-              message: Text(viewModel.messageRecord!.message)
-            )
-          }
-      }
+    ViewThatFits {
+      FullTableView(viewModel: viewModel)
+      MediumTableView(viewModel: viewModel)
+      NarrowTableView(viewModel: viewModel)
     }
     .contextMenu(forSelectionType: ProfileViewModel.ID.self) { items in
       self.profileOpsMenu(items: items)
