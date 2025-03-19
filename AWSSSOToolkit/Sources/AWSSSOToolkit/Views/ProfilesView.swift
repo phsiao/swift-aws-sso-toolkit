@@ -8,14 +8,48 @@ class ProfileViewModel: Identifiable {
   public var id: String { profileState.id }
   let profileState: ProfileState
   var userArn: String
-  var tokenExpiration: String
-  var credentialExpiration: String
+  var tokenExpiration: AnyView
+  var credentialExpiration: AnyView
 
   init(profileState: ProfileState) {
     self.profileState = profileState
     self.userArn = "N/A"
-    self.tokenExpiration = "N/A"
-    self.credentialExpiration = "N/A"
+    self.tokenExpiration = AnyView(EmptyView())
+    self.credentialExpiration = AnyView(EmptyView())
+  }
+
+  // format the date as a string for display in current time zone
+  func getDateString(_ date: Date?) -> String {
+    guard let date = date else {
+      return "N/A"
+    }
+    // let dateFormatter = ISO8601DateFormatter()
+    // dateFormatter.timeZone = TimeZone.current
+    // return dateFormatter.string(from: date)
+    let dateFormatter = DateFormatter()
+    dateFormatter.dateStyle = .short
+    dateFormatter.timeStyle = .short
+    dateFormatter.timeZone = TimeZone.current
+    return dateFormatter.string(from: date)
+  }
+
+  @MainActor
+  func updateExpirationTimes() async {
+    let tokenExpirationStr = getDateString(await profileState.tokenExpiration())
+    let credentialExpirationStr = getDateString(await profileState.credentialExpiration())
+
+    self.tokenExpiration = AnyView(
+      HStack {
+        Image(systemName: "clock")
+        Text(tokenExpirationStr)
+      }
+    )
+    self.credentialExpiration = AnyView(
+      HStack {
+        Image(systemName: "clock")
+        Text(credentialExpirationStr)
+      }
+    )
   }
 }
 

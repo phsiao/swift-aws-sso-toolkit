@@ -28,113 +28,6 @@ class ProfilesTableViewModel {
   }
 }
 
-private struct FullTableView: View {
-  @State var viewModel: ProfilesTableViewModel
-  var body: some View {
-    Table(viewModel.profileViewModels, selection: $viewModel.selectedProfiles) {
-      TableColumn("Profile Name") {
-        Text($0.profileState.profile.profileName)
-      }
-      TableColumn("SSO Session Name") {
-        switch $0.profileState.profile.profileType {
-        case .SSO(let session, _, _, _):
-          Text(session.sessionName)
-        }
-      }
-      TableColumn("Account ID") {
-        switch $0.profileState.profile.profileType {
-        case .SSO(_, let accountId, _, _):
-          Text(accountId)
-        }
-      }
-      TableColumn("Region") {
-        switch $0.profileState.profile.profileType {
-        case .SSO(_, _, _, let region):
-          Text(region)
-        }
-      }
-      TableColumn("Role Name") {
-        switch $0.profileState.profile.profileType {
-        case .SSO(_, _, let roleName, _):
-          Text(roleName)
-        }
-      }
-      TableColumn("Token Expiration") {
-        Text($0.tokenExpiration)
-      }
-      TableColumn("Credential Expiration") {
-        Text($0.credentialExpiration)
-      }
-      TableColumn("User ARN") {
-        Text($0.userArn)
-          .alert(isPresented: $viewModel.presentMessage) {
-            Alert(
-              title: Text(viewModel.messageRecord!.title),
-              message: Text(viewModel.messageRecord!.message)
-            )
-          }
-      }
-    }
-    .frame(minWidth: 1400)
-  }
-}
-
-private struct MediumTableView: View {
-  @State var viewModel: ProfilesTableViewModel
-  var body: some View {
-    Table(viewModel.profileViewModels, selection: $viewModel.selectedProfiles) {
-      TableColumn("Profile Name") {
-        Text($0.profileState.profile.profileName)
-      }
-      TableColumn("SSO Session Name") {
-        switch $0.profileState.profile.profileType {
-        case .SSO(let session, _, _, _):
-          Text(session.sessionName)
-        }
-      }
-      TableColumn("Token Expiration") {
-        Text($0.tokenExpiration)
-      }
-      TableColumn("Credential Expiration") {
-        Text($0.credentialExpiration)
-      }
-      TableColumn("User ARN") {
-        Text($0.userArn)
-          .alert(isPresented: $viewModel.presentMessage) {
-            Alert(
-              title: Text(viewModel.messageRecord!.title),
-              message: Text(viewModel.messageRecord!.message)
-            )
-          }
-      }
-    }
-    .frame(minWidth: 800)
-  }
-}
-
-private struct NarrowTableView: View {
-  @State var viewModel: ProfilesTableViewModel
-  var body: some View {
-    Table(viewModel.profileViewModels, selection: $viewModel.selectedProfiles) {
-      TableColumn("Profile Name") {
-        Text($0.profileState.profile.profileName)
-          .alert(isPresented: $viewModel.presentMessage) {
-            Alert(
-              title: Text(viewModel.messageRecord!.title),
-              message: Text(viewModel.messageRecord!.message)
-            )
-          }
-      }
-      TableColumn("SSO Session Name") {
-        switch $0.profileState.profile.profileType {
-        case .SSO(let session, _, _, _):
-          Text(session.sessionName)
-        }
-      }
-    }
-  }
-}
-
 struct ProfilesTableView: View {
   @SwiftUI.Environment(\.openURL) private var openURL
 
@@ -216,16 +109,6 @@ struct ProfilesTableView: View {
 
 // MARK: - utility functions for ProfilesTableView
 extension ProfilesTableView {
-  // format the date as a string for display in current time zone
-  func getDateString(_ date: Date?) -> String {
-    guard let date = date else {
-      return "N/A"
-    }
-    let dateFormatter = ISO8601DateFormatter()
-    dateFormatter.timeZone = TimeZone.current
-    return dateFormatter.string(from: date)
-  }
-
   func ssoLogin(profileViewModel: ProfileViewModel) async throws {
     let profileState = profileViewModel.profileState
     let identityProvider = profileState.identityResolver
@@ -251,10 +134,7 @@ extension ProfilesTableView {
 
       // FIXME: the following updates might not be instaneous
       profileViewModel.userArn = response.arn!
-      profileViewModel.tokenExpiration = getDateString(
-        await profileState.tokenExpiration())
-      profileViewModel.credentialExpiration = getDateString(
-        await profileState.credentialExpiration())
+      await profileViewModel.updateExpirationTimes()
     }
   }
 }
@@ -275,8 +155,7 @@ extension ProfilesTableView {
           let profileViewModel = viewModel.getProfileViewModel(id: items.first!)!
           let profileState = profileViewModel.profileState
           try await profileState.identityResolver.actor.logout()
-          profileViewModel.tokenExpiration = self.getDateString(await profileState.tokenExpiration())
-          profileViewModel.credentialExpiration = self.getDateString(await profileState.credentialExpiration())
+          await profileViewModel.updateExpirationTimes()
         }
       }
       Button("Forget role credentials") {
@@ -284,8 +163,7 @@ extension ProfilesTableView {
           let profileViewModel = viewModel.getProfileViewModel(id: items.first!)!
           let profileState = profileViewModel.profileState
           await profileState.identityResolver.actor.forgetRoleCredentials()
-          profileViewModel.tokenExpiration = self.getDateString(await profileState.tokenExpiration())
-          profileViewModel.credentialExpiration = self.getDateString(await profileState.credentialExpiration())
+          await profileViewModel.updateExpirationTimes()
         }
       }
     }
@@ -322,10 +200,122 @@ extension ProfilesTableView {
                 title: "Error", message: String(describing: error))
               viewModel.presentMessage = true
             }
-            profileViewModel.tokenExpiration = getDateString(await profileState.tokenExpiration())
-            profileViewModel.credentialExpiration = getDateString(await profileState.credentialExpiration())
+            await profileViewModel.updateExpirationTimes()
           }
         }
+      }
+    }
+  }
+}
+
+// MARK: - FullTableView (1400 pt. width)
+private struct FullTableView: View {
+  @State var viewModel: ProfilesTableViewModel
+  var body: some View {
+    Table(viewModel.profileViewModels, selection: $viewModel.selectedProfiles) {
+      TableColumn("Profile Name") {
+        Text($0.profileState.profile.profileName)
+      } .width(max: 100)
+      TableColumn("SSO Session Name") {
+        switch $0.profileState.profile.profileType {
+        case .SSO(let session, _, _, _):
+          Text(session.sessionName)
+        }
+      } .width(max: 100)
+      TableColumn("Account ID") {
+        switch $0.profileState.profile.profileType {
+        case .SSO(_, let accountId, _, _):
+          Text(accountId)
+        }
+      } .width(max: 100)
+      TableColumn("Region") {
+        switch $0.profileState.profile.profileType {
+        case .SSO(_, _, _, let region):
+          Text(region)
+        }
+      } .width(max: 100)
+      TableColumn("Role Name") {
+        switch $0.profileState.profile.profileType {
+        case .SSO(_, _, let roleName, _):
+          Text(roleName)
+        }
+      } .width(max: 160)
+      TableColumn("Token Expiration") {
+        $0.tokenExpiration
+      } .width(max: 160)
+      TableColumn("Credential Expiration") {
+        $0.credentialExpiration
+      } .width(max: 160)
+      TableColumn("User ARN") {
+        Text($0.userArn)
+          .alert(isPresented: $viewModel.presentMessage) {
+            Alert(
+              title: Text(viewModel.messageRecord!.title),
+              message: Text(viewModel.messageRecord!.message)
+            )
+          }
+      }
+    }
+    .frame(minWidth: 1400)
+  }
+}
+
+// MARK: - MediumTableView (800 pt. width)
+private struct MediumTableView: View {
+  @State var viewModel: ProfilesTableViewModel
+  var body: some View {
+    Table(viewModel.profileViewModels, selection: $viewModel.selectedProfiles) {
+      TableColumn("Profile Name") {
+        Text($0.profileState.profile.profileName)
+      } .width(max: 100)
+      TableColumn("SSO Session Name") {
+        switch $0.profileState.profile.profileType {
+        case .SSO(let session, _, _, _):
+          Text(session.sessionName)
+        }
+      } .width(max: 100)
+      TableColumn("Token Expiration") {
+        $0.tokenExpiration
+      } .width(max: 160)
+      TableColumn("Credential Expiration") {
+        $0.credentialExpiration
+      } .width(max: 160)
+      TableColumn("User ARN") {
+        Text($0.userArn)
+          .alert(isPresented: $viewModel.presentMessage) {
+            Alert(
+              title: Text(viewModel.messageRecord!.title),
+              message: Text(viewModel.messageRecord!.message)
+            )
+          }
+      }
+    }
+    .frame(minWidth: 800)
+  }
+}
+
+// MARK: - NarrowTableView (limited width)
+private struct NarrowTableView: View {
+  @State var viewModel: ProfilesTableViewModel
+  var body: some View {
+    Table(viewModel.profileViewModels, selection: $viewModel.selectedProfiles) {
+      TableColumn("Profile Name") {
+        Text($0.profileState.profile.profileName)
+          .alert(isPresented: $viewModel.presentMessage) {
+            Alert(
+              title: Text(viewModel.messageRecord!.title),
+              message: Text(viewModel.messageRecord!.message)
+            )
+          }
+      }
+      TableColumn("SSO Session Name") {
+        switch $0.profileState.profile.profileType {
+        case .SSO(let session, _, _, _):
+          Text(session.sessionName)
+        }
+      }
+      TableColumn("Credential Expiration") {
+        $0.credentialExpiration
       }
     }
   }
