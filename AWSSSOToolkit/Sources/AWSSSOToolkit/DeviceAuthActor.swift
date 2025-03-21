@@ -127,9 +127,15 @@ public actor SSODeviceAuthorizationFlowActor {
           )
           break
         } catch {
-          // FIXME: should only continue if it is retriable error
-          logger.error("error: \(error)")
-          continue
+          switch error {
+          case _ as AWSSSOOIDC.AuthorizationPendingException:
+            // retryable error as device auth is pending
+            logger.trace("user auth pending, retrying")
+            continue
+          default:
+            logger.error("error: \(error)")
+            throw error
+          }
         }
       }
 
