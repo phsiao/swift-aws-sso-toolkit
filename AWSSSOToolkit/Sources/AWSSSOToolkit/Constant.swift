@@ -9,6 +9,7 @@ public struct Region: Identifiable, Sendable {
   public var id: String { region }
 }
 
+/// A list of AWS regions, for use in drop-down menus.
 public let awsRegionList: [Region] = [
   Region(region: "af-south-1"),
   Region(region: "ap-east-1"),
