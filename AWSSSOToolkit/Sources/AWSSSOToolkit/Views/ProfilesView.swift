@@ -77,7 +77,7 @@ class SSOSessionForm {
       URL(string: startUrl) != nil
     }
   }
-  var region: String = "Select a region" {
+  var region: String = "Select the region where IAM Identity Center is hosted" {
     didSet {
       isFormComplete = !ssoSessionName.isEmpty &&
       awsRegionList.filter({$0.region == self.region}).count == 1 &&
@@ -95,18 +95,20 @@ struct AddSSOSessionView: View {
 
   var body: some View {
     VStack {
-      Text("Create a new SSO session")
+      Text("Create a new SSO session").padding([.top, .horizontal])
       VStack {
-        TextField("Session name", text: $form.ssoSessionName).padding(.horizontal)
-        TextField("Start URL", text: $form.startUrl).padding(.horizontal)
+        TextField("Session name", text: $form.ssoSessionName)
+          .padding([.bottom, .horizontal], 5)
+        TextField("Start URL", text: $form.startUrl)
+          .padding([.bottom, .horizontal], 5)
         Menu(form.region) {
           ForEach(awsRegionList) { reg in
             Button(reg.region) {
               self.form.region = reg.region
             }
           }
-        }.padding(.horizontal)
-
+        }
+        .padding([.horizontal], 5)
       }
       .padding()
       HStack {
@@ -130,8 +132,8 @@ struct AddSSOSessionView: View {
         .disabled(!form.isFormComplete)
         Spacer()
       }
+      .padding(.bottom, 20)
     }
-    .padding()
   }
 }
 
@@ -210,25 +212,28 @@ struct AddProfileView: View {
 
   var body: some View {
     VStack {
-      Text("Create a new profle")
+      Text("Create a new profle").padding([.top, .horizontal])
       VStack {
-        TextField("Profile name", text: $form.profileName).padding(.horizontal)
-        TextField("Account ID", text: $form.accountId).padding(.horizontal)
-        TextField("Role name", text: $form.roleName).padding(.horizontal)
+        TextField("Profile name", text: $form.profileName)
+          .padding([.bottom, .horizontal], 5)
+        TextField("Account ID", text: $form.accountId)
+          .padding([.bottom, .horizontal], 5)
+        TextField("Role name", text: $form.roleName)
+          .padding([.bottom, .horizontal], 5)
         Menu(form.region) {
           ForEach(awsRegionList) { reg in
             Button(reg.region) {
               form.region = reg.region
             }
           }
-        }.padding(.horizontal)
+        }.padding([.bottom, .horizontal], 5)
         Menu("Select SSO session") {
           ForEach(ssoSessions) { session in
             Button(session.sessionName) {
               form.ssoSession = session
             }
           }
-        }.padding(.horizontal)
+        }.padding([.horizontal], 5)
       }
       .padding()
       HStack {
@@ -257,7 +262,7 @@ struct AddProfileView: View {
         Spacer()
       }
     }
-    .padding()
+    .padding([.bottom], 20)
   }
 }
 
@@ -292,6 +297,7 @@ public struct AWSSSOProfilesView: View {
         }
         Spacer()
       }
+      .padding(.top, 20)
     }
     .sheet(isPresented: $showAddSessionView) {
       VStack {

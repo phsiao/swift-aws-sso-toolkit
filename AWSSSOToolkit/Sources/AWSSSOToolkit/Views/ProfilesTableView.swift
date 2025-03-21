@@ -132,7 +132,6 @@ extension ProfilesTableView {
         input: GetCallerIdentityInput())
       print("done callerid call")
 
-      // FIXME: the following updates might not be instaneous
       profileViewModel.userArn = response.arn!
       await profileViewModel.updateExpirationTimes()
     }
