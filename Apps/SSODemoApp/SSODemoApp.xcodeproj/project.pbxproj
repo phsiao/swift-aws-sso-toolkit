@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		BFCC94D02D86451900AB113D /* AWSSSOToolkit in Frameworks */ = {isa = PBXBuildFile; productRef = BFCC94CF2D86451900AB113D /* AWSSSOToolkit */; };
+		BFCD0D5E2D8E27DA00AC732B /* AWSSSOToolkit in Frameworks */ = {isa = PBXBuildFile; productRef = BFCD0D5D2D8E27DA00AC732B /* AWSSSOToolkit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -56,7 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BFCC94D02D86451900AB113D /* AWSSSOToolkit in Frameworks */,
+				BFCD0D5E2D8E27DA00AC732B /* AWSSSOToolkit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -126,7 +126,7 @@
 			);
 			name = SSODemoApp;
 			packageProductDependencies = (
-				BFCC94CF2D86451900AB113D /* AWSSSOToolkit */,
+				BFCD0D5D2D8E27DA00AC732B /* AWSSSOToolkit */,
 			);
 			productName = SSODemoApp;
 			productReference = BF2141022D8642C8006C4495 /* SSODemoApp.app */;
@@ -210,6 +210,8 @@
 			);
 			mainGroup = BF2140F92D8642C8006C4495;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = BF2141032D8642C8006C4495 /* Products */;
 			projectDirPath = "";
@@ -649,7 +651,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		BFCC94CF2D86451900AB113D /* AWSSSOToolkit */ = {
+		BFCD0D5D2D8E27DA00AC732B /* AWSSSOToolkit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = AWSSSOToolkit;
 		};
