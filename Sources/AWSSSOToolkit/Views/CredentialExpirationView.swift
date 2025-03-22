@@ -11,6 +11,7 @@ private func getDateString(_ date: Date) -> String {
 
 private let expirationNotAvaliable = "Not valid yet"
 
+/// View for displaying the expiration date of the profile credentials
 struct CredentialExpirationView: View {
   @State var profileViewModel: ProfileViewModel
 
@@ -20,6 +21,7 @@ struct CredentialExpirationView: View {
   }
 }
 
+/// View for displaying the expiration date of the device token
 struct TokenExpirationView: View {
   @State var profileViewModel: ProfileViewModel
 

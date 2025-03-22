@@ -11,13 +11,14 @@ struct MessageRecord: Identifiable {
   let message: String
 }
 
+/// Represents an AWS profile and its associated state for viewing in the UI.
 @Observable
 public class ProfileViewModel: Identifiable {
   public var id: String { profileState.id }
-  let profileState: ProfileState
-  var userArn: String
-  var tokenExpirationDate: Date?
-  var credentialExpirationDate: Date?
+  public let profileState: ProfileState
+  public var userArn: String
+  public var tokenExpirationDate: Date?
+  public var credentialExpirationDate: Date?
 
   public init(profileState: ProfileState) {
     self.profileState = profileState

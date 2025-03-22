@@ -18,30 +18,31 @@ public struct ToolkitProfileView: View {
   public var body: some View {
     HStack {
       Text(profileViewModel.profileState.profile.profileName)
-        .contextMenu {
-          HStack {
-            Text("Expiration")
-            CredentialExpirationView(profileViewModel: profileViewModel)
-          }
-          Divider()
-          Button("Login") {
-            Task {
-              try await ssoLogin(profileViewModel: profileViewModel)
-            }
-          }
+        .help("Use context menu to login")
+        .alert(isPresented: $presentAuthUri) {
+          Alert(
+            title: Text("Login via AWS SSO"),
+            message: Text(
+              "You now need to login via AWS SSO. Click the link below to open in your browser."
+            ),
+            primaryButton: .default(Text("Open")) {
+              openURL(authUriRecord!.authUri)
+            },
+            secondaryButton: .cancel()
+          )
         }
     }
-    .alert(isPresented: $presentAuthUri) {
-      Alert(
-        title: Text("Login via AWS SSO"),
-        message: Text(
-          "You now need to login via AWS SSO. Click the link below to open in your browser."
-        ),
-        primaryButton: .default(Text("Open")) {
-          openURL(authUriRecord!.authUri)
-        },
-        secondaryButton: .cancel()
-      )
+    .contextMenu {
+      HStack {
+        Text("Expiration")
+        CredentialExpirationView(profileViewModel: profileViewModel)
+      }
+      Divider()
+      Button("Login") {
+        Task {
+          try await ssoLogin(profileViewModel: profileViewModel)
+        }
+      }
     }
   }
 
