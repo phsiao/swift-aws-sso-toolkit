@@ -2,12 +2,21 @@ import SwiftUI
 import AWSSSOToolkit
 @preconcurrency import AWSSTS
 
+private let startUrl = "https://foo.awsapps.com/start"
+private let accountId = "123456789012"
+private let roleName = "AdministratorAccess"
+
 struct StaticProfileDemoView: View {
   @State var profileViewModel: ProfileViewModel
   @State var userArn: String = "N/A"
 
   init() {
-    let staticProfile = AWSProfile(profileName: "myprofile", profileType: .SSO(session: AWSSSOSession(sessionName: "mysession", startUrl: "https://hsiao.awsapps.com/start", region: "us-east-1"), accountId: "714381189854", roleName: "AdministratorAccess", region: "us-east-1"))
+    let ssoSession = AWSSSOSession(sessionName: "mysession", startUrl: startUrl, region: "us-east-1")
+    let staticProfile = AWSProfile(profileName: "myprofile",
+                                   profileType: .SSO(session: ssoSession,
+                                                     accountId: accountId,
+                                                     roleName: roleName,
+                                                     region: "us-east-1"))
     let staticProfileState = ProfileState(profile: staticProfile)
     profileViewModel = ProfileViewModel(profileState: staticProfileState)
   }
