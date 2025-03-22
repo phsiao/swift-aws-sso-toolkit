@@ -3,7 +3,7 @@ import Testing
 @testable import AWSSSOToolkit
 
 @Test("SSOSessionForm is complete when requirements are met")
-func SSOSessionFormTest() throws {
+func ssoSessionFormTest() throws {
   let sessionForm = SSOSessionForm()
   #expect(sessionForm.isFormComplete == false)
 
@@ -24,7 +24,7 @@ func SSOSessionFormTest() throws {
 }
 
 @Test("ProfileForm is complete when requirements are met")
-func ProfileFormTest() throws {
+func profileFormTest() throws {
   let ssoSession = AWSSSOSession(
     sessionName: "testname",
     startUrl: "https://foo/start",
