@@ -4,69 +4,6 @@ import GRDB
 import os
 
 @Observable
-class ProfileViewModel: Identifiable {
-  public var id: String { profileState.id }
-  let profileState: ProfileState
-  var userArn: String
-  var tokenExpiration: AnyView
-  var credentialExpiration: AnyView
-
-  init(profileState: ProfileState) {
-    self.profileState = profileState
-    self.userArn = "N/A"
-    self.tokenExpiration = AnyView(EmptyView())
-    self.credentialExpiration = AnyView(EmptyView())
-  }
-
-  // format the date as a string for display in current time zone
-  func getDateString(_ date: Date) -> String {
-    let dateFormatter = DateFormatter()
-    dateFormatter.dateStyle = .short
-    dateFormatter.timeStyle = .short
-    dateFormatter.timeZone = TimeZone.current
-    return dateFormatter.string(from: date)
-  }
-
-  @MainActor
-  func updateExpirationTimes() async {
-    let tokenExpiration = await profileState.tokenExpiration()
-    let credentialExpiration = await profileState.credentialExpiration()
-
-    if tokenExpiration == nil {
-      self.tokenExpiration = AnyView(EmptyView())
-    } else {
-      let tokenExpirationStr = getDateString(tokenExpiration!)
-      self.tokenExpiration = AnyView(
-        HStack {
-          Image(systemName: "clock")
-          Text(tokenExpirationStr)
-        }
-      )
-    }
-
-    if credentialExpiration == nil {
-      self.credentialExpiration = AnyView(EmptyView())
-    } else {
-      let credentialExpirationStr = getDateString(credentialExpiration!)
-      self.credentialExpiration = AnyView(
-        HStack {
-          Image(systemName: "clock")
-          Text(credentialExpirationStr)
-        }
-      )
-    }
-  }
-}
-
-@Observable
-class ProfileViewModelStore: Identifiable {
-  public var store: [ProfileViewModel]
-  init(profileViewModels: [ProfileViewModel]) {
-    self.store = profileViewModels
-  }
-}
-
-@Observable
 class SSOSessionForm {
   var ssoSessionName: String = "" {
     didSet {
