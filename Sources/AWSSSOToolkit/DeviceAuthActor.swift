@@ -88,7 +88,7 @@ public actor SSODeviceAuthorizationFlowActor {
       guard let deviceAuthData = deviceAuthData else {
         throw SSODeviceAuthorizationFlowActorError.runtimeError("error calling startDeviceAuthorization")
       }
-      logger.debug("deviceAuth: \(String(describing: deviceAuthData))")
+      // logger.debug("deviceAuth: \(String(describing: deviceAuthData))")
       guard let verificationUri = deviceAuthData.verificationUriComplete else {
         throw SSODeviceAuthorizationFlowActorError.runtimeError(
           "startDeviceAuthorization must not return nil verification URI"
@@ -143,7 +143,7 @@ public actor SSODeviceAuthorizationFlowActor {
         logger.error("cannot get token")
         return
       }
-      logger.info("\(String(describing: token))")
+      logger.trace("\(String(describing: token))")
       _tokenExpiration = startDate.addingTimeInterval(TimeInterval(token.expiresIn))
     }
   }

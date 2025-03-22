@@ -3,17 +3,6 @@ import SmithyIdentity
 import SwiftUI
 import os
 
-struct AuthUriRecord: Identifiable {
-  let id: UUID = UUID()
-  let authUri: URL
-}
-
-struct MessageRecord: Identifiable {
-  let id: UUID = UUID()
-  let title: String
-  let message: String
-}
-
 @Observable
 class ProfilesTableViewModel {
   var presentAuthUri: Bool = false
@@ -240,10 +229,10 @@ private struct FullTableView: View {
         }
       } .width(max: 160)
       TableColumn("Token Expiration") {
-        $0.tokenExpiration
+        TokenExpirationView(profileViewModel: $0)
       } .width(max: 160)
       TableColumn("Credential Expiration") {
-        $0.credentialExpiration
+        CredentialExpirationView(profileViewModel: $0)
       } .width(max: 160)
       TableColumn("User ARN") {
         Text($0.userArn)
@@ -274,10 +263,10 @@ private struct MediumTableView: View {
         }
       } .width(max: 100)
       TableColumn("Token Expiration") {
-        $0.tokenExpiration
+        TokenExpirationView(profileViewModel: $0)
       } .width(max: 160)
       TableColumn("Credential Expiration") {
-        $0.credentialExpiration
+        CredentialExpirationView(profileViewModel: $0)
       } .width(max: 160)
       TableColumn("User ARN") {
         Text($0.userArn)
@@ -314,7 +303,7 @@ private struct NarrowTableView: View {
         }
       }
       TableColumn("Credential Expiration") {
-        $0.credentialExpiration
+        CredentialExpirationView(profileViewModel: $0)
       }
     }
   }
