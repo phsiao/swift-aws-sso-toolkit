@@ -4,7 +4,7 @@ import Testing
 
 @testable import AWSSSOToolkit
 
-@Test("test BackingDatabase getDatabasePath()")
+@Test("BackingDatabase getDatabasePath() should return expected file path")
 func dbpathTest() throws {
   let db1 = BackingDatabase(identifier: "foo", dbFileName: "bar.sqlite")
   let url1 = try db1.getDatabaseFilePath()
@@ -14,14 +14,15 @@ func dbpathTest() throws {
   #expect(url2.path().hasSuffix("/foo/xyz.sqlite"))
 }
 
-@Test("test AWSSSOSession")
+@Test("BackingDatabase can save and load AWSSSOSession")
 func AWSSSOSessionTest() throws {
   let session = AWSSSOSession(sessionName: "foo", startUrl: "bar", region: "us-west-2")
   #expect(session.sessionName == "foo")
   #expect(session.startUrl == "bar")
   #expect(session.region == "us-west-2")
 
-  let db = BackingDatabase(identifier: "awsssotoolkit-test-session-delete", dbFileName: "db-session.sqlite")
+  let db = BackingDatabase(
+    identifier: "awsssotoolkit-test-session-delete", dbFileName: "db-session.sqlite")
   try db.migrate()
 
   let dbQueue = try db.getDbQueue()
@@ -42,9 +43,10 @@ func AWSSSOSessionTest() throws {
   try FileManager.default.removeItem(at: try db.getDatabaseFileDir())
 }
 
-@Test("test AWSSSOProfile")
+@Test("BackingDatabase can save and load AWSProfile")
 func AWSProfileTest() throws {
-  let db = BackingDatabase(identifier: "awsssotoolkit-test-profile-delete", dbFileName: "db-profile.sqlite")
+  let db = BackingDatabase(
+    identifier: "awsssotoolkit-test-profile-delete", dbFileName: "db-profile.sqlite")
   try db.migrate()
 
   let session = AWSSSOSession(sessionName: "foo", startUrl: "bar", region: "us-west-2")
@@ -58,7 +60,9 @@ func AWSProfileTest() throws {
     try session.insert(db)
   }
 
-  let profile = AWSProfile(profileName: "test", profileType: .SSO(session: session, accountId: "123", roleName: "admin", region: "us-west-2"))
+  let profile = AWSProfile(
+    profileName: "test",
+    profileType: .SSO(session: session, accountId: "123", roleName: "admin", region: "us-west-2"))
   let ssoProfile = AWSSSOProfile(from: profile)
   try dbQueue.write { db in
     try ssoProfile.insert(db)
@@ -91,22 +95,28 @@ func AWSProfileTest() throws {
   try FileManager.default.removeItem(at: try db.getDatabaseFileDir())
 }
 
-
-@Test("test AWSSSOProfiles")
+@Test("BackingDatabse should handle multiple AWSSSOProfiles")
 func AWSProfilesTest() throws {
-  let db = BackingDatabase(identifier: "awsssotoolkit-test-profiles-delete", dbFileName: "db-profiles.sqlite")
+  let db = BackingDatabase(
+    identifier: "awsssotoolkit-test-profiles-delete", dbFileName: "db-profiles.sqlite")
   try db.migrate()
 
   let session1 = AWSSSOSession(sessionName: "foo1", startUrl: "bar1", region: "us-west-2")
   let session2 = AWSSSOSession(sessionName: "foo2", startUrl: "bar2", region: "us-east-2")
 
-  let profile1 = AWSProfile(profileName: "test1", profileType: .SSO(session: session1, accountId: "123", roleName: "admin", region: "us-west-2"))
-  let profile2 = AWSProfile(profileName: "test2", profileType: .SSO(session: session2, accountId: "123", roleName: "admin", region: "us-west-2"))
-  let profile3 = AWSProfile(profileName: "test3", profileType: .SSO(session: session2, accountId: "123", roleName: "admin", region: "us-east-1"))
+  let profile1 = AWSProfile(
+    profileName: "test1",
+    profileType: .SSO(session: session1, accountId: "123", roleName: "admin", region: "us-west-2"))
+  let profile2 = AWSProfile(
+    profileName: "test2",
+    profileType: .SSO(session: session2, accountId: "123", roleName: "admin", region: "us-west-2"))
+  let profile3 = AWSProfile(
+    profileName: "test3",
+    profileType: .SSO(session: session2, accountId: "123", roleName: "admin", region: "us-east-1"))
 
   var config = Configuration()
   config.prepareDatabase { db in
-    db.trace { print($0) }
+    // db.trace { print($0) }
   }
   let dbQueue = try db.getDbQueue(configuration: config)
 
